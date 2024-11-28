@@ -13,6 +13,14 @@ public class ResponseMessage<T> {
         this.data = data;
     }
 
+    public static <T> ResponseMessage<T> success(T data, String message) {
+        return new ResponseMessage<T>(200, message, data);
+    }
+
+    public static <T> ResponseMessage<T> error(int ret, String message) {
+        return new ResponseMessage<T>(ret, message, null);
+    }
+
     public int getRet() {
         return ret;
     }
@@ -37,5 +45,4 @@ public class ResponseMessage<T> {
         this.data = data;
     }
 
-    
 }

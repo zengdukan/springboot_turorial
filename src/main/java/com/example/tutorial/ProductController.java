@@ -5,6 +5,8 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,6 +28,9 @@ public class ProductController {
     private GitConfig2 gitConfig2;
 
     private ProductRepository productRepository;
+
+    @Autowired
+    private ProductService productService;
 
     public ProductController(Config config, GitConfig gitConfig, GitConfig2 gitConfig2, ProductRepository productRepository) {
         this.config = config;
@@ -82,5 +87,24 @@ public class ProductController {
         long ret = productRepository.countByName(name);
         ResponseMessage<Long> msg = new ResponseMessage<Long>(org.springframework.http.HttpStatus.OK.value(), "ok", ret);
         return  ResponseEntity.ok(msg);
+    }
+
+    @GetMapping("/set_price")
+    public ResponseEntity<?> setPrice(@RequestParam(value = "id") Long id, @RequestParam(value = "price") Double price) {
+        productRepository.updatePriceById(id, price);
+        ResponseMessage<Long> msg = ResponseMessage.success(null, "ok");
+        return  ResponseEntity.ok(msg);
+    }
+    
+    @GetMapping("/set_price_name")
+    public ResponseEntity<?> setPriceAndNameById(@RequestParam(value = "id") Long id, @RequestParam(value = "price") Double price , @RequestParam(value = "name") String name) {
+        try {
+            productService.setNameAndPriceForTestTx(id, name, price);
+            ResponseMessage<Long> msg = ResponseMessage.success(null, "ok");
+            return  ResponseEntity.ok(msg);
+        } catch (Exception e) {
+            ResponseMessage<Long> msg = ResponseMessage.error(404, "error");
+            return  ResponseEntity.ok(msg);
+        }
     }
 }
