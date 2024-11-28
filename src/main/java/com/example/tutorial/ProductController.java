@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -73,6 +74,13 @@ public class ProductController {
     public ResponseEntity<?> deleteById(@PathVariable Long id) {
         productRepository.deleteById(id);
         ResponseMessage<ProductEntity> msg = new ResponseMessage<ProductEntity>(org.springframework.http.HttpStatus.OK.value(), "ok", null);
+        return  ResponseEntity.ok(msg);
+    }
+
+    @GetMapping("/count")
+    public ResponseEntity<?> countByName(@RequestParam(value = "name") String name) {
+        long ret = productRepository.countByName(name);
+        ResponseMessage<Long> msg = new ResponseMessage<Long>(org.springframework.http.HttpStatus.OK.value(), "ok", ret);
         return  ResponseEntity.ok(msg);
     }
 }
