@@ -1,21 +1,11 @@
 package com.example.tutorial;
 
-import java.util.List;
 import java.util.Optional;
 
+import com.example.tutorial.dto.AddProductReq;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/product")
@@ -43,68 +33,62 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody ProductEntity productEntity) {
+    public ResponseMessage<ProductEntity> create(@Valid @RequestBody AddProductReq productReq) {
+        ProductEntity productEntity = new ProductEntity();
+        productEntity.setCount(productReq.getCount());
+        productEntity.setPrice(productReq.getPrice());
+        productEntity.setName(productReq.getName());
         productRepository.save(productEntity);
-        ResponseMessage<ProductEntity> msg = new ResponseMessage<ProductEntity>(200, "ok", productEntity);
-        return ResponseEntity.ok(msg);
+        return new ResponseMessage<ProductEntity>(200, null, productEntity);
     }
 
     @PutMapping
-    public ResponseEntity<?> update(@RequestBody ProductEntity productEntity) {
+    public ResponseMessage<ProductEntity> update(@RequestBody ProductEntity productEntity) {
         productRepository.save(productEntity);
-        ResponseMessage<ProductEntity> msg = new ResponseMessage<ProductEntity>(200, "ok", productEntity);
-        return ResponseEntity.ok(msg);
+        return new ResponseMessage<ProductEntity>(200, null, productEntity);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> get(@PathVariable Long id) {
+    public ResponseMessage<ProductEntity> get(@PathVariable Long id) {
         Optional<ProductEntity> ret = productRepository.findById(id);
         if (ret.isPresent()) {
-            ResponseMessage<ProductEntity> msg = new ResponseMessage<ProductEntity>(200, "ok", ret.get());
-            return  ResponseEntity.ok(msg);
+            return new ResponseMessage<ProductEntity>(200, null, ret.get());
         } else {
-            ResponseMessage<ProductEntity> msg = new ResponseMessage<ProductEntity>(org.springframework.http.HttpStatus.NOT_FOUND.value(), "not found", null);
-            return  ResponseEntity.ok(msg);
+            throw new RuntimeException("not found");
         }
     }
 
     @GetMapping("/all")
-    public ResponseEntity<?> getAll() {
+    public ResponseMessage<Iterable<ProductEntity>> getAll() {
         Iterable<ProductEntity> ret = productRepository.findAll();
-        ResponseMessage<Iterable<ProductEntity>> msg = new ResponseMessage<Iterable<ProductEntity>>(org.springframework.http.HttpStatus.OK.value(), "ok", ret);
-        return  ResponseEntity.ok(msg);
+        return new ResponseMessage<Iterable<ProductEntity>>(org.springframework.http.HttpStatus.OK.value(), null, ret);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteById(@PathVariable Long id) {
+    public ResponseMessage<Void> deleteById(@PathVariable Long id) {
         productRepository.deleteById(id);
-        ResponseMessage<ProductEntity> msg = new ResponseMessage<ProductEntity>(org.springframework.http.HttpStatus.OK.value(), "ok", null);
-        return  ResponseEntity.ok(msg);
+        return new ResponseMessage<Void>(org.springframework.http.HttpStatus.OK.value(), null, null);
     }
 
     @GetMapping("/count")
-    public ResponseEntity<?> countByName(@RequestParam(value = "name") String name) {
+    public ResponseMessage<Long> countByName(@RequestParam(value = "name") String name) {
         long ret = productRepository.countByName(name);
-        ResponseMessage<Long> msg = new ResponseMessage<Long>(org.springframework.http.HttpStatus.OK.value(), "ok", ret);
-        return  ResponseEntity.ok(msg);
+        return new ResponseMessage<Long>(org.springframework.http.HttpStatus.OK.value(), null, ret);
     }
 
     @GetMapping("/set_price")
-    public ResponseEntity<?> setPrice(@RequestParam(value = "id") Long id, @RequestParam(value = "price") Double price) {
+    public ResponseMessage<Void> setPrice(@RequestParam(value = "id") Long id, @RequestParam(value = "price") Double price) {
         productRepository.updatePriceById(id, price);
-        ResponseMessage<Long> msg = ResponseMessage.success(null, "ok");
-        return  ResponseEntity.ok(msg);
+        return ResponseMessage.success(null, "ok");
     }
     
     @GetMapping("/set_price_name")
-    public ResponseEntity<?> setPriceAndNameById(@RequestParam(value = "id") Long id, @RequestParam(value = "price") Double price , @RequestParam(value = "name") String name) {
+    public ResponseMessage<?> setPriceAndNameById(@RequestParam(value = "id") Long id, @RequestParam(value = "price") Double price , @RequestParam(value = "name") String name) {
         try {
             productService.setNameAndPriceForTestTx(id, name, price);
-            ResponseMessage<Long> msg = ResponseMessage.success(null, "ok");
-            return  ResponseEntity.ok(msg);
+            return ResponseMessage.success(null, "ok");
         } catch (Exception e) {
-            ResponseMessage<Long> msg = ResponseMessage.error(404, "error");
-            return  ResponseEntity.ok(msg);
+            return ResponseMessage.error(404, "error");
         }
     }
 }
